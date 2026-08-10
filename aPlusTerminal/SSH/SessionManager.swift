@@ -132,6 +132,14 @@ final class TerminalSession: Identifiable, Hashable {
     @ObservationIgnored private var alertedAgentStatus: AgentActivityMonitor.Status = .none
     /// When the current working phase began — the alert filter's evidence.
     @ObservationIgnored private var workingSince: Date?
+    /// True once the user has LOOKED at this session while its agent waited —
+    /// and until they actually answer. An agent with background tasks cycles
+    /// working→waiting on its own timers, and every cycle used to read as a
+    /// brand-new "needs you": the user's report was notifications for a
+    /// session they had already checked out and deliberately not answered.
+    /// Seeing the wait is the mute; SENDING INPUT is what re-arms alerts,
+    /// because a response is the only signal that the next wait is news.
+    @ObservationIgnored private var currentWaitSeen = false
     /// A waiting edge only alerts after this much REAL work. Anything shorter
     /// is a redraw cycle wearing work's clothes: dismissing the keyboard on
     /// the way out of the app resizes the pty, the TUI repaints (a burst, so
@@ -162,7 +170,24 @@ final class TerminalSession: Identifiable, Hashable {
         // The filter: only sustained work earns an alert on its end.
         guard let since = workingSince,
               now.timeIntervalSince(since) >= Self.minimumWorkBeforeAlert else { return }
+        // A wait the user has seen and chosen not to answer stays quiet —
+        // including the "new" edges its own background cycles manufacture —
+        // until the user responds.
+        guard !currentWaitSeen else { return }
         postAgentAlert(.becameWaiting)
+    }
+
+    /// The session screen is in front of the user's eyes. If the agent is
+    /// waiting right now, that wait is officially seen.
+    ///
+    /// Judged against the FUNNEL's own record (the last status noted), not
+    /// re-derived from the monitors: the funnel is what decides alerts, so
+    /// the funnel's view of "waiting" is the one that must be marked — the
+    /// monitors can lag or disagree with it.
+    func markViewed() {
+        if alertedAgentStatus == .waiting {
+            currentWaitSeen = true
+        }
     }
 
     /// Answers a palette tap through MeshyyKit's tested gate. Returns whether
@@ -183,6 +208,7 @@ final class TerminalSession: Identifiable, Hashable {
         do {
             try await meshyy.performQuickAction(id: id)
             lastQuickActionRefusal = nil
+            currentWaitSeen = false
             return true
         } catch {
             lastQuickActionRefusal = "\(error)"
@@ -337,7 +363,7 @@ final class TerminalSession: Identifiable, Hashable {
         }
 
         let scrollBridge = ScrollBridge(
-            sendData: { [weak self] data in self?.sendInput(data) },
+            sendData: { [weak self] data in self?.sendInput(data, countsAsResponse: false) },
             wheelBridgeEnabled: { [weak settings] in settings?.scrollWheelBridge ?? true }
         )
         scrollBridge.onModeBTriggered = { [weak self] in
@@ -352,7 +378,13 @@ final class TerminalSession: Identifiable, Hashable {
         self.scrollBridge = scrollBridge
     }
 
-    func sendInput(_ data: Data) {
+    /// `countsAsResponse: false` marks machine-generated traffic — scroll
+    /// wheel events, internal multiplexer commands — which must not re-arm
+    /// notifications: only the USER answering does.
+    func sendInput(_ data: Data, countsAsResponse: Bool = true) {
+        if countsAsResponse {
+            currentWaitSeen = false
+        }
         outboxContinuation.yield(.data(data))
     }
 
@@ -911,7 +943,7 @@ final class TerminalSession: Identifiable, Hashable {
             // pty, so the multiplexer attach was swallowed on every meshyy
             // reconnect: the user came back to a bare login shell instead of their
             // session, with nothing logged and nothing to see.
-            sendInput(Data(cmd.utf8))
+            sendInput(Data(cmd.utf8), countsAsResponse: false)
         }
 
         switch intent {
