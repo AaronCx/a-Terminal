@@ -9,6 +9,7 @@ struct TerminalScreen: View {
     @Environment(SessionManager.self) private var sessionManager
     @Environment(PiPCoordinator.self) private var pip
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
 
     let session: TerminalSession
 
@@ -187,6 +188,13 @@ struct TerminalScreen: View {
         }) {
             PreviewScreen(session: session, initialPort: previewPort)
         }
+        .onChange(of: scenePhase) { _, phase in
+            // Foregrounding WITH this screen up is also looking at it —
+            // onAppear does not refire on scene activation.
+            if phase == .active {
+                session.markViewed()
+            }
+        }
         .onChange(of: session.pendingPreviewPort) { _, port in
             // A loopback OSC 8 link was tapped in the terminal. Consume the
             // request so re-tapping the same link presents again.
@@ -233,6 +241,7 @@ struct TerminalScreen: View {
             }
         }
         .onAppear {
+            session.markViewed()
             switch session.state {
             case .connected:
                 session.bridge.focus()

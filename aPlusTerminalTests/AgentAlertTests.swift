@@ -102,6 +102,60 @@ final class AgentTransitionTests: XCTestCase {
         session.noteAgentStatus(.waiting, now: t0.addingTimeInterval(21))
         XCTAssertEqual(fired, [.becameWaiting], "still waiting is not newly waiting")
     }
+
+    func testASeenWaitStaysQuietUntilTheUserAnswers() throws {
+        // The report: "I get notifications saying my agent needs me but I
+        // already checked the session out and just didn't respond." An agent
+        // with background tasks cycles working→waiting on its own timers;
+        // each cycle used to read as a brand-new need.
+        let session = bareSession()
+        var fired: [AgentAlertPolicy.Trigger] = []
+        session.postAgentAlert = { fired.append($0) }
+        let t0 = Date()
+
+        // Real work ends: the first, legitimate notification.
+        session.noteAgentStatus(.working, now: t0)
+        session.noteAgentStatus(.waiting, now: t0.addingTimeInterval(10))
+        XCTAssertEqual(fired, [.becameWaiting])
+
+        // The user opens the session, looks at the prompt, decides not to
+        // answer yet, and leaves.
+        session.markViewed()
+
+        // The agent's own background cycles manufacture fresh edges — five
+        // sustained-work cycles, all after the user already saw the wait.
+        var t = 20.0
+        for _ in 0..<5 {
+            session.noteAgentStatus(.working, now: t0.addingTimeInterval(t))
+            session.noteAgentStatus(.waiting, now: t0.addingTimeInterval(t + 8))
+            t += 20
+        }
+        XCTAssertEqual(fired, [.becameWaiting],
+                       "a seen wait re-notified — the exact report this pins")
+
+        // The user ANSWERS. The next wait is genuinely news again.
+        session.sendInput(Data("y\r".utf8))
+        session.noteAgentStatus(.working, now: t0.addingTimeInterval(t))
+        session.noteAgentStatus(.waiting, now: t0.addingTimeInterval(t + 8))
+        XCTAssertEqual(fired, [.becameWaiting, .becameWaiting])
+    }
+
+    func testScrollingIsNotAnAnswer() throws {
+        // Reading back through output is looking, not responding — wheel
+        // events must not re-arm the alerts a real answer re-arms.
+        let session = bareSession()
+        var fired: [AgentAlertPolicy.Trigger] = []
+        session.postAgentAlert = { fired.append($0) }
+        let t0 = Date()
+
+        session.noteAgentStatus(.working, now: t0)
+        session.noteAgentStatus(.waiting, now: t0.addingTimeInterval(10))
+        session.markViewed()
+        session.sendInput(Data("\u{1B}[<64;10;10M".utf8), countsAsResponse: false)
+        session.noteAgentStatus(.working, now: t0.addingTimeInterval(20))
+        session.noteAgentStatus(.waiting, now: t0.addingTimeInterval(30))
+        XCTAssertEqual(fired, [.becameWaiting], "a scroll re-armed the alerts")
+    }
 }
 
 /// The daemon's read outranks the heuristic exactly when meshyy carries the
