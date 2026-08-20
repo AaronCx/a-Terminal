@@ -31,9 +31,9 @@ die() {
 
 cd "$REPO_DIR"
 
-# [1] Pre-flight: clean tree on fresh main; marketing version must be ahead of live.
+# [1] Pre-flight: clean tree on fresh develop; marketing version must be ahead of live.
 [[ -z "$(git status --porcelain)" ]] || die "working tree dirty — commit/stash first"
-git checkout main >/dev/null 2>&1
+git checkout develop >/dev/null 2>&1
 git pull >/dev/null 2>&1
 mkt=$(grep -E '^\s*MARKETING_VERSION:' project.yml | head -1 | awk '{print $2}' | tr -d '"')
 live=$(curl -sf -m 20 "https://itunes.apple.com/lookup?id=$APP_ID" | python3 -c "import json,sys; r=json.load(sys.stdin)['results']; print(r[0]['version'] if r else '0')")
@@ -54,13 +54,13 @@ if [[ "$cur" != "$BUILD_N" ]]; then
   grep -q "CURRENT_PROJECT_VERSION = $BUILD_N" aPlusTerminal.xcodeproj/project.pbxproj || die "bump did not land in generated pbxproj"
   git "${GIT_ID[@]}" commit -am "chore: bump build number to $BUILD_N" >/dev/null
   git push -u origin "$branch" >/dev/null 2>&1
-  pr_url=$(gh pr create --base main --title "chore: bump build number to $BUILD_N" \
+  pr_url=$(gh pr create --base develop --title "chore: bump build number to $BUILD_N" \
     --body "Build-number bump for TestFlight build $BUILD_N (ship-testflight.sh).")
   pr_num=$(basename "$pr_url")
   echo "PR #$pr_num open — watching checks"
   gh pr checks "$pr_num" --watch --fail-fast --interval 15 || die "CI red on bump PR #$pr_num — fix and re-run"
   gh pr merge "$pr_num" --squash --delete-branch >/dev/null || die "merge of PR #$pr_num failed"
-  git checkout main >/dev/null 2>&1 && git pull >/dev/null 2>&1
+  git checkout develop >/dev/null 2>&1 && git pull >/dev/null 2>&1
   make generate >/dev/null
 else
   echo "CURRENT_PROJECT_VERSION already $BUILD_N — skipping bump PR"

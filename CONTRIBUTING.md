@@ -6,8 +6,9 @@ encodes.
 
 ## Ground rules
 
-- **Branch off `main`, PR back to `main`.** PRs to any other base silently
-  skip most CI here.
+- **Branch off `develop`, PR back to `develop`.** `main` tracks the latest
+  App Store–approved release and only receives release merges — see
+  RELEASING.md.
 - **Zero data collection is enforced, not aspirational.**
   `scripts/check-network-surface.sh` fails the build if a network-capable
   symbol appears outside the audited SSH / meshyy / VNC / local-network

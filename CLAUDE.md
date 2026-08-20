@@ -9,6 +9,20 @@ Privacy-first iOS SSH terminal. Spec: `~/Documents/github/relay-ios-terminal-spe
 - Build: `make build` (picks the first available iPhone simulator; locally that is iPhone 17 Pro). Tests: `make test`.
 - Signing, device deploys, and App Store Connect / StoreKit Connect setup are human-in-Xcode steps — stop and ask.
 
+## Branch & release policy (2026-08-19)
+
+- **`develop` is the integration branch.** Feature branches base on `develop`;
+  open PRs with `--base develop` (the global pr-base-main reminder is
+  satisfied by any explicit base). CI runs on all PRs.
+- **`main` = latest App Store–approved release only** (currently 1.0.3,
+  build 43). Never push app code to `main`; it moves via a `release/vX.Y.Z`
+  PR after Apple approves — full process in `RELEASING.md`. A server-side
+  ruleset enforces PR-only, no force pushes.
+- `/ship N` (scripts/ship-testflight.sh) builds TestFlight uploads from
+  `develop`.
+- On approval: tag `vX.Y.Z` at the approved bump commit, GitHub release
+  titled "X.Y.Z (build N)", then merge `main` back into `develop`.
+
 ## Constraints
 
 - Dependency policy: SwiftTerm, Citadel, swift-crypto, XcodeGen (build-time), RoyalVNCKit (vendored under `Vendor/royalvnc`, view-only VNC monitor) — nothing else. RoyalVNCKit is a patched vendor copy, not an SPM URL reference: see the header of `Vendor/royalvnc/Package.swift` before touching it.
