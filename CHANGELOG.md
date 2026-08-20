@@ -3,6 +3,30 @@
 Notable user-facing changes per release. Versions map to App Store releases;
 unreleased work accumulates at the top.
 
+## Unreleased
+
+- **meshyy transport (opt-in, beta):** a session can run over meshyy, a
+  clean-room resumable terminal transport — a dropped connection resumes
+  where it left off instead of reconnecting into a fresh shell. Typing
+  `exit` closes the tab like a real terminal, and a resumed terminal
+  re-learns the running program's input modes, so tmux scrolling still
+  works after an auto-resume. Off by default. (#131, #137)
+- **Agent notifications:** the phone tells you when an agent is waiting on
+  an answer, and one tap answers it from a quick-actions palette. A wait
+  you have already seen stays quiet until you answer, and quiet output is
+  no longer mistaken for "waiting". Agent status is surfaced where you
+  are already looking. (#132, #138, #139, #140, #143, #149)
+- **Sessions widget:** a home-screen widget that lists live sessions and
+  opens exactly the session it shows. (#135, #136)
+- **Agent icons:** agents get their real faces across the app, with a
+  hand-drawn doodle set as the default and support for custom icons,
+  sized to fit the Dynamic Island. (#143, #144, #145, #146, #148)
+- **Fixes:** returning from a preview refocuses the terminal program, and
+  the Sessions widget orders sessions correctly (#136); tapping an agent
+  notification no longer races connect into a crash (#142); scrolling is
+  consistent and alerts are honest about state (#145); the session picker
+  keeps its payload and a swipe stays off the status line (#147).
+
 ## 1.0.3 (build 43) — 2026-08-01
 
 - **Preview pop-out and console:** a preview can now be popped out into the
