@@ -3,7 +3,7 @@
 Notable user-facing changes per release. Versions map to App Store releases;
 unreleased work accumulates at the top.
 
-## Unreleased
+## 1.0.3 (build 43) — 2026-08-01
 
 - **Preview pop-out and console:** a preview can now be popped out into the
   same floating window the Monitor uses — which is also the only way to keep
@@ -69,6 +69,6 @@ unreleased work accumulates at the top.
   hostname support, App Intents ("Connect to Server", "Wake Server"),
   ECDSA key import/auth/export.
 
-## 1.0 (build 13) — 2026-06-27
+## 1.0 (build 18) — 2026-06-27
 
 - Initial App Store release.
