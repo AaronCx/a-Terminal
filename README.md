@@ -6,6 +6,8 @@ An agent asks for permission; your phone tells you; one tap answers it — and n
 
 [![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/app/id6779393452)
 
+[![CI](https://github.com/AaronCx/a-plus-terminal/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AaronCx/a-plus-terminal/actions/workflows/ci.yml)
+
 Free, tip-supported. No features are paywalled, ever.
 
 > Not affiliated with Anthropic, OpenAI, Google, or Nous Research; product names are trademarks of their respective owners.
