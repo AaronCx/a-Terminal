@@ -59,6 +59,16 @@ make test       # run unit tests
 
 The `.xcodeproj` is generated and gitignored — edit `project.yml` instead.
 
+### Branches and releases
+
+- **`main`** tracks the source of the latest App Store–approved release.
+  Nothing lands here until Apple has approved the build that carries it.
+- **[`develop`](https://github.com/AaronCx/a-plus-terminal/tree/develop)** is
+  where active development happens; TestFlight builds ship from it.
+- Every tag and [GitHub release](https://github.com/AaronCx/a-plus-terminal/releases)
+  corresponds one-to-one with an approved App Store version — see
+  [RELEASING.md](RELEASING.md).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
